@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<title>IT Support Ticket System</title>
+
+<style>
+
+body{
+font-family:Arial;
+background:#f4f6f9;
+margin:0;
+padding:30px;
+}
+
+.wrapper{
+max-width:900px;
+margin:auto;
+}
+
+h1{
+margin-bottom:20px;
+}
+
+button{
+background:#007bff;
+color:white;
+border:none;
+padding:10px 16px;
+border-radius:6px;
+cursor:pointer;
+font-size:14px;
+margin-right:10px;
+}
+
+button:hover{
+background:#0056b3;
+}
+
+.logout{
+background:#dc3545;
+}
+
+.logout:hover{
+background:#a71d2a;
+}
+
+.filter{
+margin-top:15px;
+margin-bottom:20px;
+}
+
+.ticket{
+background:white;
+border-radius:10px;
+padding:20px;
+margin-bottom:20px;
+box-shadow:0 2px 8px rgba(0,0,0,0.1);
+}
+
+input, textarea, select{
+width:100%;
+padding:8px;
+margin-top:5px;
+margin-bottom:10px;
+border-radius:6px;
+border:1px solid #ccc;
+font-size:14px;
+}
+
+textarea{
+resize:none;
+}
+
+.status-open{
+color:red;
+font-weight:bold;
+}
+
+.status-progress{
+color:orange;
+font-weight:bold;
+}
+
+.status-closed{
+color:green;
+font-weight:bold;
+}
+
+.stats{
+background:white;
+padding:20px;
+border-radius:10px;
+margin-bottom:30px;
+box-shadow:0 2px 8px rgba(0,0,0,0.1);
+}
+
+.history{
+margin-top:15px;
+}
+
+.note{
+background:#f4f6f9;
+padding:10px;
+border-radius:6px;
+margin-bottom:8px;
+}
+
+img{
+max-width:400px;
+border-radius:6px;
+margin-top:10px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<script>
+
+if(!localStorage.getItem("admin") && !localStorage.getItem("role")){
+window.location.href="index.html";
+}
+
+</script>
+
+<div class="wrapper">
+
+<h1>Support Dashboard</h1>
+
+<button onclick="window.location.href='index.html'">
+  ← Zurück zur Startseite
+  </button>
+
+<button onclick="loadTickets()">
+Aktualisieren
+</button>
+
+<button class="logout" onclick="logout()">
+Logout
+</button>
+
+<div class="filter">
+
+<label>Tickets filtern:</label>
+
+<select id="statusFilter" onchange="loadTickets()">
+
+<option value="all">Alle</option>
+<option value="open">Offen</option>
+<option value="in_progress">In Bearbeitung</option>
+<option value="closed">Erledigt</option>
+
+</select>
+
+</div>
+
+<div class="stats">
+
+<b>Ticket Statistik</b><br><br>
+
+Offen: <span id="open"></span><br>
+In Bearbeitung: <span id="progress"></span><br>
+Erledigt: <span id="closed"></span>
+
+</div>
+
+<div id="tickets"></div>
+
+</div>
+
+<script>
+
+async function loadTickets(){
+
+const res=await fetch("/api/tickets");
+let tickets=await res.json();
+
+const filter=document.getElementById("statusFilter").value;
+
+/* Statistik */
+
+let open=0;
+let progress=0;
+let closed=0;
+
+tickets.forEach(t=>{
+
+if(t.status==="open") open++;
+if(t.status==="in_progress") progress++;
+if(t.status==="closed") closed++;
+
+});
+
+document.getElementById("open").innerText=open;
+document.getElementById("progress").innerText=progress;
+document.getElementById("closed").innerText=closed;
+
+/* Sortieren nach Datum (neueste zuerst) */
+
+tickets.sort((a,b)=>b.id-a.id);
+
+let html="";
+
+tickets.forEach(t=>{
+
+if(filter!=="all" && t.status!==filter){
+return;
+}
+
+let statusText="";
+let statusClass="";
+
+if(t.status==="open"){
+statusText="Offen";
+statusClass="status-open";
+}
+
+if(t.status==="in_progress"){
+statusText="In Bearbeitung";
+statusClass="status-progress";
+}
+
+if(t.status==="closed"){
+statusText="Erledigt";
+statusClass="status-closed";
+}
+
+html+=`
+
+<div class="ticket">
+
+<h3>${t.number} — ${t.subject}</h3>
+
+<b>Teams Teilnehmer:</b> ${t.participant}<br>
+
+<b>Details:</b><br>
+${t.description}
+
+${t.screenshot ? `
+<br><br>
+<b>Screenshot:</b><br>
+<img src="${t.screenshot}">
+` : ""}
+
+<br><br>
+
+<b>Status:</b> <span class="${statusClass}">${statusText}</span>
+
+<form onsubmit="saveTicket(event,${t.id})">
+
+<label>Status ändern</label>
+
+<select id="status-${t.id}">
+<option value="open" ${t.status==="open"?"selected":""}>Offen</option>
+<option value="in_progress" ${t.status==="in_progress"?"selected":""}>In Bearbeitung</option>
+<option value="closed" ${t.status==="closed"?"selected":""}>Erledigt</option>
+</select>
+
+<label>Name</label>
+<input id="name-${t.id}" placeholder="z.B. Max Mustermann">
+
+<label>Rolle</label>
+<select id="role-${t.id}">
+<option value="User">User</option>
+<option value="Support" selected>Support</option>
+</select>
+
+<label>Notiz</label>
+<textarea id="note-${t.id}" rows="3"></textarea>
+
+<button type="submit">
+Speichern
+</button>
+
+</form>
+
+<div class="history">
+
+<b>Bearbeitungsverlauf:</b><br><br>
+
+${(t.notes || []).map(n => `
+<div class="note">
+${n.time} – <b>${n.name}</b> (${n.role})<br>
+${n.text}
+</div>
+`).join("")}
+
+</div>
+
+</div>
+
+`;
+
+});
+
+document.getElementById("tickets").innerHTML=html;
+
+}
+
+async function saveTicket(event,id){
+
+event.preventDefault();
+
+const status=document.getElementById("status-"+id).value;
+const note=document.getElementById("note-"+id).value;
+const name=document.getElementById("name-"+id).value;
+const role=document.getElementById("role-"+id).value;
+
+await fetch("/api/update/"+id,{
+
+method:"POST",
+headers:{"Content-Type":"application/json"},
+
+body:JSON.stringify({
+status:status,
+note:note,
+name:name,
+role:role
+})
+
+});
+
+loadTickets();
+
+}
+
+function logout(){
+localStorage.clear();
+window.location.href="index.html";
+
+}
+
+loadTickets();
+
+</script>
+<footer style="text-align:center;margin-top:40px;color:#777;font-size:12px">
+  © 2026 Luciana Bezerra – IT Support Ticket System
+  </footer>
+</body>
+</html>

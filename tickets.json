@@ -1,0 +1,20 @@
+[
+  {
+    "id": 1772895604143,
+    "number": "T-1001",
+    "participant": "Erika Mustermann",
+    "subject": "Dackel.lokal funktioniert nicht",
+    "description": "Keine Verbindung",
+    "screenshot": "/uploads/1772895604134-Lokal-Net.JPG",
+    "status": "open",
+    "notes": [
+      {
+        "text": "Keine Verbindung",
+        "name": "Erika Mustermann",
+        "role": "User",
+        "time": "7.3.2026, 16:00:04"
+      }
+    ],
+    "created": "7.3.2026, 16:00:04"
+  }
+]

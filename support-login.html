@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<title>Support Login</title>
+
+<style>
+
+body{
+font-family:Arial;
+background:#f4f6f9;
+margin:0;
+padding:0;
+}
+
+header{
+background:#007bff;
+color:white;
+padding:20px;
+text-align:center;
+font-size:22px;
+}
+
+.container{
+display:flex;
+justify-content:center;
+margin-top:60px;
+}
+
+.card{
+background:white;
+padding:30px;
+width:400px;
+border-radius:10px;
+box-shadow:0 2px 10px rgba(0,0,0,0.1);
+}
+
+label{
+font-weight:bold;
+}
+
+input{
+width:100%;
+padding:10px;
+margin-top:5px;
+margin-bottom:15px;
+border-radius:6px;
+border:1px solid #ccc;
+}
+
+button{
+background:#007bff;
+color:white;
+border:none;
+padding:12px;
+width:100%;
+border-radius:6px;
+cursor:pointer;
+}
+
+button:hover{
+background:#0056b3;
+}
+
+.error{
+color:red;
+display:none;
+margin-bottom:10px;
+}
+
+.back{
+margin-top:20px;
+text-align:center;
+}
+
+.back a{
+color:#007bff;
+text-decoration:none;
+font-weight:bold;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<header>
+IT Support Ticket System
+</header>
+
+<div class="container">
+
+<div class="card">
+
+<h2>Support Login</h2>
+
+<div id="error" class="error">
+Falscher Login
+</div>
+
+<form id="loginForm">
+
+<label>Username</label>
+<input id="user" required>
+
+<label>Password</label>
+<input type="password" id="pass" required>
+
+<button type="submit">
+Login
+</button>
+
+</form>
+
+<div class="back">
+<a href="index.html">Zurück zum Ticket System</a>
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+document.getElementById("loginForm").addEventListener("submit",function(e){
+
+e.preventDefault();
+
+const user=document.getElementById("user").value;
+const pass=document.getElementById("pass").value;
+
+if(user==="support" && pass==="support123"){
+
+localStorage.setItem("role","support");
+localStorage.setItem("username",user);
+
+window.location.href="admin.html";
+
+}else{
+
+document.getElementById("error").style.display="block";
+
+}
+
+});
+
+</script>
+<footer style="text-align:center;margin-top:40px;color:#777;font-size:12px">
+  © 2026 Luciana Bezerra – IT Support Ticket System
+  </footer>
+</body>
+</html>

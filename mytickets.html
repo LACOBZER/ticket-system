@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<title>Eigene Tickets</title>
+
+<style>
+
+body{
+font-family:Arial;
+background:#f4f6f9;
+margin:0;
+padding:0;
+}
+
+header{
+background:#007bff;
+color:white;
+padding:20px;
+text-align:center;
+font-size:22px;
+}
+
+.container{
+max-width:800px;
+margin:auto;
+margin-top:40px;
+}
+
+.card{
+background:white;
+padding:25px;
+border-radius:10px;
+box-shadow:0 2px 10px rgba(0,0,0,0.1);
+margin-bottom:20px;
+}
+
+input{
+width:100%;
+padding:10px;
+margin-top:10px;
+margin-bottom:15px;
+border-radius:6px;
+border:1px solid #ccc;
+}
+
+button{
+background:#007bff;
+color:white;
+border:none;
+padding:12px;
+border-radius:6px;
+cursor:pointer;
+}
+
+.ticket{
+border:1px solid #ddd;
+padding:15px;
+margin-top:15px;
+border-radius:6px;
+background:#fafafa;
+}
+
+.status-open{
+color:red;
+font-weight:bold;
+}
+
+.status-progress{
+color:orange;
+font-weight:bold;
+}
+
+.status-closed{
+color:green;
+font-weight:bold;
+}
+
+.back{
+margin-top:20px;
+text-align:center;
+}
+
+.back a{
+color:#007bff;
+text-decoration:none;
+font-weight:bold;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<header>
+IT Support Ticket System
+</header>
+
+<div class="container">
+
+<div class="card">
+
+<h2>Eigene Tickets anzeigen</h2>
+
+<p>
+Bitte geben Sie Ihren <b>Teams Teilnehmer Namen</b> ein.<br>
+Die Tickets werden anhand dieses Namens gesucht.
+</p>
+
+<label>Teams Teilnehmer</label>
+<input id="name" placeholder="z.B. Max Mustermann">
+
+<button onclick="loadTickets()">
+Tickets anzeigen
+</button>
+
+<div id="ticketList"></div>
+
+<div class="back">
+<br>
+<a href="/">← Zurück zur Startseite</a>
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+async function loadTickets(){
+
+const name=document.getElementById("name").value;
+
+const res=await fetch("/api/tickets");
+const tickets=await res.json();
+
+let html="";
+
+tickets.forEach(t=>{
+
+if(t.participant===name){
+
+let statusText="";
+let statusClass="";
+
+if(t.status==="open"){
+statusText="Offen";
+statusClass="status-open";
+}
+
+if(t.status==="in_progress"){
+statusText="In Bearbeitung";
+statusClass="status-progress";
+}
+
+if(t.status==="closed"){
+statusText="Erledigt";
+statusClass="status-closed";
+}
+
+html+=`
+
+<div class="ticket">
+
+<b>Ticketnummer:</b> ${t.number}<br>
+<b>Anliegen:</b> ${t.subject}<br>
+<b>Details:</b> ${t.description}<br>
+
+<b>Status:</b> <span class="${statusClass}">${statusText}</span>
+
+</div>
+
+`;
+
+}
+
+});
+
+if(html===""){
+html="Keine Tickets gefunden.";
+}
+
+document.getElementById("ticketList").innerHTML=html;
+
+}
+
+</script>
+<footer style="text-align:center;margin-top:40px;color:#777;font-size:12px">
+  © 2026 Luciana Bezerra – IT Support Ticket System
+  </footer>
+</body>
+</html>
