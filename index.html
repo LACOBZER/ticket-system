@@ -75,6 +75,7 @@ Dieses Projekt wurde im Rahmen einer Umschulung entwickelt.
 
     .success{
       background:#d4edda;
+      color:#155724;
       padding:10px;
       border-radius:6px;
       margin-bottom:10px;
@@ -112,12 +113,6 @@ Dieses Projekt wurde im Rahmen einer Umschulung entwickelt.
       border:1px solid #ccc;
       border-radius:8px;
     }
-
-    .diagram p{
-      font-size:14px;
-      color:#555;
-      margin-top:10px;
-    }
   </style>
 </head>
 
@@ -129,12 +124,13 @@ Dieses Projekt wurde im Rahmen einer Umschulung entwickelt.
 
 <div class="container">
   <div class="card">
+
     <h2>Support Ticket erstellen</h2>
 
     <div id="success" class="success"></div>
     <div id="error" class="error"></div>
 
-    <form id="ticketForm" enctype="multipart/form-data">
+    <form id="ticketForm">
       <label>Teams Teilnehmer</label>
       <input type="text" id="participant" required>
 
@@ -142,7 +138,7 @@ Dieses Projekt wurde im Rahmen einer Umschulung entwickelt.
       <input type="text" id="subject" required>
 
       <label>Details</label>
-      <textarea id="details" rows="3"></textarea>
+      <textarea id="details" rows="4"></textarea>
 
       <label>Screenshot (optional)</label>
       <input type="file" id="screenshot" accept="image/*">
@@ -156,7 +152,6 @@ Dieses Projekt wurde im Rahmen einer Umschulung entwickelt.
 
     <div class="section">
       <h3>Eigene Tickets verfolgen</h3>
-
       <button onclick="window.location.href='mytickets.html'">
         Eigene Tickets anzeigen
       </button>
@@ -167,6 +162,7 @@ Dieses Projekt wurde im Rahmen einer Umschulung entwickelt.
       &nbsp;&nbsp;|&nbsp;&nbsp;
       <a href="support-login.html">Support Login</a>
     </div>
+
   </div>
 </div>
 
@@ -187,20 +183,21 @@ document.getElementById("ticketForm").addEventListener("submit", async function(
   successBox.innerHTML = "";
   errorBox.innerHTML = "";
 
-  const formData = new FormData();
-  formData.append("participant", document.getElementById("participant").value);
-  formData.append("subject", document.getElementById("subject").value);
-  formData.append("description", document.getElementById("details").value);
-
-  const file = document.getElementById("screenshot").files[0];
-  if(file){
-    formData.append("screenshot", file);
-  }
+  const participant = document.getElementById("participant").value.trim();
+  const subject = document.getElementById("subject").value.trim();
+  const details = document.getElementById("details").value.trim();
 
   try {
     const res = await fetch("/api/tickets", {
       method: "POST",
-      body: formData
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        participant: participant,
+        subject: subject,
+        description: details
+      })
     });
 
     const data = await res.json();
