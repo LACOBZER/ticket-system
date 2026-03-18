@@ -26,7 +26,7 @@ if (!supabaseUrl || !supabaseKey) {
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-/* Upload im Speicher statt lokal */
+// Screenshot-Datei wird angenommen, aber erstmal nicht gespeichert
 const upload = multer({
   storage: multer.memoryStorage()
 });
@@ -39,7 +39,7 @@ async function loadTickets() {
 
   if (error) {
     console.error("Fehler beim Laden der Tickets:", error);
-    return [];
+    throw error;
   }
 
   return data || [];
@@ -56,44 +56,11 @@ function generateTicketNumber(tickets) {
   return `T-${maxNumber + 1}`;
 }
 
-/* Ticket erstellen */
+// Ticket erstellen
 app.post("/api/tickets", upload.single("screenshot"), async (req, res) => {
   try {
     const tickets = await loadTickets();
     const now = new Date().toLocaleString();
-
-    let screenshotUrl = "";
-
-    if (req.file) {
-      try {
-        const originalName = req.file.originalname || "bild";
-        const parts = originalName.split(".");
-        const fileExt = parts.length > 1 ? parts.pop().toLowerCase() : "png";
-
-        const safeExt = fileExt.replace(/[^a-z0-9]/g, "") || "png";
-        const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${safeExt}`;
-        const filePath = `tickets/${fileName}`;
-
-        const { error: uploadError } = await supabase.storage
-          .from("screenshots")
-          .upload(filePath, req.file.buffer, {
-            contentType: req.file.mimetype,
-            upsert: false
-          });
-
-        if (uploadError) {
-          console.error("Fehler beim Screenshot-Upload:", uploadError);
-        } else {
-          const { data: publicUrlData } = supabase.storage
-            .from("screenshots")
-            .getPublicUrl(filePath);
-
-          screenshotUrl = publicUrlData?.publicUrl || "";
-        }
-      } catch (uploadErr) {
-        console.error("Unerwarteter Fehler beim Screenshot-Upload:", uploadErr);
-      }
-    }
 
     const ticket = {
       id: Date.now(),
@@ -101,7 +68,7 @@ app.post("/api/tickets", upload.single("screenshot"), async (req, res) => {
       participant: req.body.participant || "",
       subject: req.body.subject || "",
       description: req.body.description || "",
-      screenshot: screenshotUrl,
+      screenshot: "",
       status: "open",
       notes: [
         {
@@ -114,47 +81,49 @@ app.post("/api/tickets", upload.single("screenshot"), async (req, res) => {
       created: now
     };
 
-    const { error: insertError } = await supabase
-      .from("tickets")
-      .insert(ticket);
+    const { error } = await supabase.from("tickets").insert(ticket);
 
-    if (insertError) {
-      console.error("Fehler beim Speichern des Tickets:", insertError);
+    if (error) {
+      console.error("Fehler beim Speichern des Tickets:", error);
       return res.status(500).json({
         success: false,
-        error: "Ticket konnte nicht gespeichert werden."
+        error: error.message || "Ticket konnte nicht gespeichert werden."
       });
     }
 
+    console.log("Ticket wird gesendet:", ticket);
     return res.json(ticket);
   } catch (err) {
     console.error("Serverfehler bei /api/tickets:", err);
     return res.status(500).json({
       success: false,
-      error: "Serverfehler"
+      error: err.message || "Serverfehler"
     });
   }
 });
 
-/* Tickets laden */
+// Tickets laden
 app.get("/api/tickets", async (req, res) => {
   try {
     const tickets = await loadTickets();
     return res.json(tickets);
   } catch (err) {
-    console.error("Serverfehler bei /api/tickets GET:", err);
+    console.error("Serverfehler bei GET /api/tickets:", err);
     return res.status(500).json([]);
   }
 });
 
-/* Ticket bearbeiten */
+// Ticket bearbeiten
 app.post("/api/update/:id", async (req, res) => {
   try {
     const tickets = await loadTickets();
     const ticket = tickets.find((t) => String(t.id) === String(req.params.id));
 
     if (!ticket) {
-      return res.status(404).json({ success: false, error: "Ticket nicht gefunden" });
+      return res.status(404).json({
+        success: false,
+        error: "Ticket nicht gefunden"
+      });
     }
 
     const allowedStatus = ["open", "in_progress", "closed"];
@@ -173,7 +142,7 @@ app.post("/api/update/:id", async (req, res) => {
       });
     }
 
-    const { error: updateError } = await supabase
+    const { error } = await supabase
       .from("tickets")
       .update({
         status: ticket.status,
@@ -181,15 +150,21 @@ app.post("/api/update/:id", async (req, res) => {
       })
       .eq("id", ticket.id);
 
-    if (updateError) {
-      console.error("Fehler beim Aktualisieren:", updateError);
-      return res.status(500).json({ success: false });
+    if (error) {
+      console.error("Fehler beim Aktualisieren:", error);
+      return res.status(500).json({
+        success: false,
+        error: error.message || "Update fehlgeschlagen"
+      });
     }
 
     return res.json({ success: true });
   } catch (err) {
     console.error("Serverfehler bei /api/update/:id:", err);
-    return res.status(500).json({ success: false });
+    return res.status(500).json({
+      success: false,
+      error: err.message || "Serverfehler"
+    });
   }
 });
 
