@@ -6,7 +6,6 @@ Autor: Luciana Bezerra
 
 import express from "express";
 import cors from "cors";
-import fs from "fs";
 import multer from "multer";
 import { createClient } from "@supabase/supabase-js";
 
@@ -15,7 +14,6 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.static("."));
-app.use("/uploads", express.static("uploads"));
 
 const PORT = process.env.PORT || 3000;
 
@@ -28,23 +26,10 @@ if (!supabaseUrl || !supabaseKey) {
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-/* Upload Ordner */
-if (!fs.existsSync("uploads")) {
-  fs.mkdirSync("uploads");
-}
-
-/* Screenshot Upload */
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "uploads/");
-  },
-  filename: function (req, file, cb) {
-    const name = Date.now() + "-" + file.originalname;
-    cb(null, name);
-  }
+/* Multer: Datei im Speicher halten statt lokal speichern */
+const upload = multer({
+  storage: multer.memoryStorage()
 });
-
-const upload = multer({ storage });
 
 async function loadTickets() {
   const { data, error } = await supabase
@@ -72,13 +57,42 @@ app.post("/api/tickets", upload.single("screenshot"), async (req, res) => {
     const tickets = await loadTickets();
     const now = new Date().toLocaleString();
 
+    let screenshotUrl = "";
+
+    if (req.file) {
+      const fileExt = req.file.originalname.split(".").pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${fileExt}`;
+      const filePath = `tickets/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("screenshots")
+        .upload(filePath, req.file.buffer, {
+          contentType: req.file.mimetype,
+          upsert: false
+        });
+
+      if (uploadError) {
+        console.error("Fehler beim Bild-Upload:", uploadError);
+        return res.status(500).json({
+          success: false,
+          error: "Screenshot konnte nicht hochgeladen werden."
+        });
+      }
+
+      const { data: publicUrlData } = supabase.storage
+        .from("screenshots")
+        .getPublicUrl(filePath);
+
+      screenshotUrl = publicUrlData.publicUrl || "";
+    }
+
     const ticket = {
       id: Date.now(),
       number: generateTicketNumber(tickets),
       participant: req.body.participant || "",
       subject: req.body.subject || "",
       description: req.body.description || "",
-      screenshot: req.file ? "/uploads/" + req.file.filename : "",
+      screenshot: screenshotUrl,
       status: "open",
       notes: [
         {
