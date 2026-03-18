@@ -6,7 +6,6 @@ Autor: Luciana Bezerra
 
 import express from "express";
 import cors from "cors";
-import multer from "multer";
 import { createClient } from "@supabase/supabase-js";
 
 const app = express();
@@ -25,11 +24,6 @@ if (!supabaseUrl || !supabaseKey) {
 }
 
 const supabase = createClient(supabaseUrl, supabaseKey);
-
-// Screenshot-Datei wird angenommen, aber erstmal nicht gespeichert
-const upload = multer({
-  storage: multer.memoryStorage()
-});
 
 async function loadTickets() {
   const { data, error } = await supabase
@@ -56,8 +50,7 @@ function generateTicketNumber(tickets) {
   return `T-${maxNumber + 1}`;
 }
 
-// Ticket erstellen
-app.post("/api/tickets", upload.single("screenshot"), async (req, res) => {
+app.post("/api/tickets", async (req, res) => {
   try {
     const tickets = await loadTickets();
     const now = new Date().toLocaleString();
@@ -84,14 +77,13 @@ app.post("/api/tickets", upload.single("screenshot"), async (req, res) => {
     const { error } = await supabase.from("tickets").insert(ticket);
 
     if (error) {
-      console.error("Fehler beim Speichern des Tickets:", error);
+      console.error("Fehler beim Speichern:", error);
       return res.status(500).json({
         success: false,
         error: error.message || "Ticket konnte nicht gespeichert werden."
       });
     }
 
-    console.log("Ticket wird gesendet:", ticket);
     return res.json(ticket);
   } catch (err) {
     console.error("Serverfehler bei /api/tickets:", err);
@@ -102,7 +94,6 @@ app.post("/api/tickets", upload.single("screenshot"), async (req, res) => {
   }
 });
 
-// Tickets laden
 app.get("/api/tickets", async (req, res) => {
   try {
     const tickets = await loadTickets();
@@ -113,7 +104,6 @@ app.get("/api/tickets", async (req, res) => {
   }
 });
 
-// Ticket bearbeiten
 app.post("/api/update/:id", async (req, res) => {
   try {
     const tickets = await loadTickets();
