@@ -1,238 +1,233 @@
-<!DOCTYPE html>
-
 <!--
 IT Support Ticket System
 Entwickelt von: Luciana Bezerra
 Jahr: 2026
 Dieses Projekt wurde im Rahmen einer Umschulung entwickelt.
 -->
-
+<!DOCTYPE html>
 <html>
-
 <head>
+  <title>IT Support Ticket System</title>
 
-<title>IT Support Ticket System</title>
+  <style>
+    body{
+      font-family:Arial;
+      background:#f4f6f9;
+      margin:0;
+      padding:0;
+    }
 
-<style>
+    header{
+      background:#007bff;
+      color:white;
+      padding:20px;
+      text-align:center;
+      font-size:22px;
+    }
 
-body{
-font-family:Arial;
-background:#f4f6f9;
-margin:0;
-padding:0;
-}
+    .container{
+      display:flex;
+      justify-content:center;
+      margin-top:50px;
+    }
 
-header{
-background:#007bff;
-color:white;
-padding:20px;
-text-align:center;
-font-size:22px;
-}
+    .card{
+      background:white;
+      padding:30px;
+      width:420px;
+      border-radius:10px;
+      box-shadow:0 2px 10px rgba(0,0,0,0.1);
+    }
 
-.container{
-display:flex;
-justify-content:center;
-margin-top:50px;
-}
+    label{
+      font-weight:bold;
+    }
 
-.card{
-background:white;
-padding:30px;
-width:420px;
-border-radius:10px;
-box-shadow:0 2px 10px rgba(0,0,0,0.1);
-}
+    input, textarea{
+      width:100%;
+      padding:10px;
+      margin-top:5px;
+      margin-bottom:15px;
+      border-radius:6px;
+      border:1px solid #ccc;
+      font-size:14px;
+      box-sizing:border-box;
+    }
 
-label{
-font-weight:bold;
-}
+    textarea{
+      resize:none;
+    }
 
-input, textarea{
-width:100%;
-padding:10px;
-margin-top:5px;
-margin-bottom:15px;
-border-radius:6px;
-border:1px solid #ccc;
-font-size:14px;
-}
+    button{
+      background:#007bff;
+      color:white;
+      border:none;
+      padding:12px;
+      width:100%;
+      border-radius:6px;
+      font-size:16px;
+      cursor:pointer;
+    }
 
-textarea{
-resize:none;
-}
+    button:hover{
+      background:#0056b3;
+    }
 
-button{
-background:#007bff;
-color:white;
-border:none;
-padding:12px;
-width:100%;
-border-radius:6px;
-font-size:16px;
-cursor:pointer;
-}
+    .success{
+      background:#d4edda;
+      padding:10px;
+      border-radius:6px;
+      margin-bottom:10px;
+      display:none;
+    }
 
-button:hover{
-background:#0056b3;
-}
+    .error{
+      background:#f8d7da;
+      color:#721c24;
+      padding:10px;
+      border-radius:6px;
+      margin-bottom:10px;
+      display:none;
+    }
 
-.success{
-background:#d4edda;
-padding:10px;
-border-radius:6px;
-margin-bottom:10px;
-display:none;
-}
+    .section{
+      margin-top:25px;
+      text-align:center;
+    }
 
-.section{
-margin-top:25px;
-text-align:center;
-}
+    .section a{
+      color:#007bff;
+      text-decoration:none;
+      font-weight:bold;
+    }
 
-.section a{
-color:#007bff;
-text-decoration:none;
-font-weight:bold;
-}
+    .diagram{
+      text-align:center;
+      margin-top:60px;
+    }
 
-.diagram{
-text-align:center;
-margin-top:60px;
-}
+    .diagram img{
+      max-width:700px;
+      width:100%;
+      border:1px solid #ccc;
+      border-radius:8px;
+    }
 
-.diagram img{
-max-width:700px;
-width:100%;
-border:1px solid #ccc;
-border-radius:8px;
-}
-
-.diagram p{
-font-size:14px;
-color:#555;
-margin-top:10px;
-}
-
-</style>
-
+    .diagram p{
+      font-size:14px;
+      color:#555;
+      margin-top:10px;
+    }
+  </style>
 </head>
 
 <body>
 
 <header>
-<h2>IT Support Ticket System</h2>
+  <h2>IT Support Ticket System</h2>
 </header>
 
 <div class="container">
+  <div class="card">
+    <h2>Support Ticket erstellen</h2>
 
-<div class="card">
+    <div id="success" class="success"></div>
+    <div id="error" class="error"></div>
 
-<h2>Support Ticket erstellen</h2>
+    <form id="ticketForm" enctype="multipart/form-data">
+      <label>Teams Teilnehmer</label>
+      <input type="text" id="participant" required>
 
-<div id="success" class="success"></div>
+      <label>Anliegen</label>
+      <input type="text" id="subject" required>
 
-<form id="ticketForm" enctype="multipart/form-data">
+      <label>Details</label>
+      <textarea id="details" rows="3"></textarea>
 
-<label>Teams Teilnehmer</label>
-<input type="text" id="participant" required>
+      <label>Screenshot (optional)</label>
+      <input type="file" id="screenshot" accept="image/*">
 
-<label>Anliegen</label>
-<input type="text" id="subject" required>
+      <button type="submit">
+        Ticket erstellen
+      </button>
+    </form>
 
-<label>Details</label>
-<textarea id="details" rows="3"></textarea>
+    <hr>
 
-<label>Screenshot (optional)</label>
-<input type="file" id="screenshot" accept="image/*">
+    <div class="section">
+      <h3>Eigene Tickets verfolgen</h3>
 
-<button type="submit">
-Ticket erstellen
-</button>
+      <button onclick="window.location.href='mytickets.html'">
+        Eigene Tickets anzeigen
+      </button>
+    </div>
 
-</form>
-
-<hr>
-
-<div class="section">
-
-<h3>Eigene Tickets verfolgen</h3>
-
-<button onclick="window.location.href='mytickets.html'">
-Eigene Tickets anzeigen
-</button>
-
+    <div class="section">
+      <a href="admin-login.html">Admin Login</a>
+      &nbsp;&nbsp;|&nbsp;&nbsp;
+      <a href="support-login.html">Support Login</a>
+    </div>
+  </div>
 </div>
-
-<div class="section">
-
-<a href="admin-login.html">
-Admin Login
-</a>
-
-&nbsp;&nbsp;|&nbsp;&nbsp;
-
-<a href="support-login.html">
-Support Login
-</a>
-
-</div>
-
-</div>
-
-</div>
-
-
-<!-- USE CASE DIAGRAMM -->
 
 <div class="diagram">
-
-<h3>Funktionsübersicht des Ticket Systems</h3>
-
-<img src="usecase.png" alt="Use Case Diagramm">
-
-
+  <h3>Funktionsübersicht des Ticket Systems</h3>
+  <img src="usecase.png" alt="Use Case Diagramm">
 </div>
 
 <script>
-
 document.getElementById("ticketForm").addEventListener("submit", async function(e){
+  e.preventDefault();
 
-e.preventDefault();
+  const successBox = document.getElementById("success");
+  const errorBox = document.getElementById("error");
 
-const formData = new FormData();
+  successBox.style.display = "none";
+  errorBox.style.display = "none";
+  successBox.innerHTML = "";
+  errorBox.innerHTML = "";
 
-formData.append("participant", document.getElementById("participant").value);
-formData.append("subject", document.getElementById("subject").value);
-formData.append("description", document.getElementById("details").value);
+  const formData = new FormData();
+  formData.append("participant", document.getElementById("participant").value);
+  formData.append("subject", document.getElementById("subject").value);
+  formData.append("description", document.getElementById("details").value);
 
-const file = document.getElementById("screenshot").files[0];
+  const file = document.getElementById("screenshot").files[0];
+  if(file){
+    formData.append("screenshot", file);
+  }
 
-if(file){
-formData.append("screenshot", file);
-}
+  try {
+    const res = await fetch("/api/tickets", {
+      method: "POST",
+      body: formData
+    });
 
-const res = await fetch("/api/tickets",{
-method:"POST",
-body:formData
+    const data = await res.json();
+    console.log("SERVER RESPONSE:", data);
+
+    if (!res.ok || !data.number) {
+      errorBox.style.display = "block";
+      errorBox.innerHTML = "Fehler beim Erstellen: " + (data.error || "Unbekannter Fehler");
+      return;
+    }
+
+    successBox.style.display = "block";
+    successBox.innerHTML =
+      "Ticket erfolgreich erstellt!<br><b>Ticketnummer: " + data.number + "</b>";
+
+    document.getElementById("ticketForm").reset();
+  } catch (err) {
+    console.error(err);
+    errorBox.style.display = "block";
+    errorBox.innerHTML = "Server nicht erreichbar.";
+  }
 });
-
-const ticket = await res.json();
-
-document.getElementById("success").style.display="block";
-
-document.getElementById("success").innerHTML =
-"Ticket erfolgreich erstellt!<br><b>Ticketnummer: "
-+ ticket.number +
-"</b>";
-
-document.getElementById("ticketForm").reset();
-
-});
-
 </script>
+
 <footer style="text-align:center;margin-top:40px;color:#777;font-size:12px">
   © 2026 Luciana Bezerra – IT Support Ticket System
-  </footer>
+</footer>
+
 </body>
 </html>
