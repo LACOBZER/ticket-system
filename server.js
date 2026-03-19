@@ -6,7 +6,6 @@ Autor: Luciana Bezerra
 
 import express from "express";
 import cors from "cors";
-import multer from "multer";
 import { createClient } from "@supabase/supabase-js";
 
 const app = express();
@@ -25,10 +24,6 @@ if (!supabaseUrl || !supabaseKey) {
 }
 
 const supabase = createClient(supabaseUrl, supabaseKey);
-
-const upload = multer({
-  storage: multer.memoryStorage()
-});
 
 async function loadTickets() {
   const { data, error } = await supabase
@@ -55,43 +50,25 @@ function generateTicketNumber(tickets) {
   return `T-${maxNumber + 1}`;
 }
 
-app.post("/api/tickets", upload.single("screenshot"), async (req, res) => {
+app.get("/api/tickets", async (req, res) => {
   try {
     const tickets = await loadTickets();
+    return res.json(tickets);
+  } catch (err) {
+    console.error("GET /api/tickets FEHLER:", err);
+    return res.status(500).json({
+      success: false,
+      error: err.message || "Serverfehler"
+    });
+  }
+});
+
+app.post("/api/tickets", async (req, res) => {
+  try {
+    console.log("POST /api/tickets BODY:", req.body);
+
+    const tickets = await loadTickets();
     const now = new Date().toLocaleString();
-
-    let screenshotUrl = "";
-
-    if (req.file) {
-      try {
-        const originalName = req.file.originalname || "bild.png";
-        const parts = originalName.split(".");
-        const fileExt = parts.length > 1 ? parts.pop().toLowerCase() : "png";
-        const safeExt = fileExt.replace(/[^a-z0-9]/g, "") || "png";
-
-        const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${safeExt}`;
-        const filePath = `tickets/${fileName}`;
-
-        const { error: uploadError } = await supabase.storage
-          .from("screenshots")
-          .upload(filePath, req.file.buffer, {
-            contentType: req.file.mimetype,
-            upsert: false
-          });
-
-        if (uploadError) {
-          console.error("Fehler beim Screenshot-Upload:", uploadError);
-        } else {
-          const { data } = supabase.storage
-            .from("screenshots")
-            .getPublicUrl(filePath);
-
-          screenshotUrl = data?.publicUrl || "";
-        }
-      } catch (err) {
-        console.error("Unerwarteter Screenshot-Fehler:", err);
-      }
-    }
 
     const ticket = {
       id: Date.now(),
@@ -99,7 +76,7 @@ app.post("/api/tickets", upload.single("screenshot"), async (req, res) => {
       participant: req.body.participant || "",
       subject: req.body.subject || "",
       description: req.body.description || "",
-      screenshot: screenshotUrl,
+      screenshot: "",
       status: "open",
       notes: [
         {
@@ -115,30 +92,21 @@ app.post("/api/tickets", upload.single("screenshot"), async (req, res) => {
     const { error } = await supabase.from("tickets").insert(ticket);
 
     if (error) {
-      console.error("Fehler beim Speichern des Tickets:", error);
+      console.error("Insert-Fehler:", error);
       return res.status(500).json({
         success: false,
         error: error.message || "Ticket konnte nicht gespeichert werden."
       });
     }
 
+    console.log("Ticket gespeichert:", ticket.number);
     return res.json(ticket);
   } catch (err) {
-    console.error("Serverfehler bei /api/tickets:", err);
+    console.error("POST /api/tickets FEHLER:", err);
     return res.status(500).json({
       success: false,
       error: err.message || "Serverfehler"
     });
-  }
-});
-
-app.get("/api/tickets", async (req, res) => {
-  try {
-    const tickets = await loadTickets();
-    return res.json(tickets);
-  } catch (err) {
-    console.error("Serverfehler bei GET /api/tickets:", err);
-    return res.status(500).json([]);
   }
 });
 
@@ -179,7 +147,7 @@ app.post("/api/update/:id", async (req, res) => {
       .eq("id", ticket.id);
 
     if (error) {
-      console.error("Fehler beim Aktualisieren:", error);
+      console.error("Update-Fehler:", error);
       return res.status(500).json({
         success: false,
         error: error.message || "Update fehlgeschlagen"
@@ -188,7 +156,7 @@ app.post("/api/update/:id", async (req, res) => {
 
     return res.json({ success: true });
   } catch (err) {
-    console.error("Serverfehler bei /api/update/:id:", err);
+    console.error("POST /api/update/:id FEHLER:", err);
     return res.status(500).json({
       success: false,
       error: err.message || "Serverfehler"
