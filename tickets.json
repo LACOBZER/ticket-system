@@ -16,5 +16,41 @@
       }
     ],
     "created": "7.3.2026, 16:00:04"
+  },
+  {
+    "id": 1773823386405,
+    "number": "T-1002",
+    "participant": "Luciana Bezerra",
+    "subject": "Server",
+    "description": "Keine Verbindung",
+    "screenshot": "/uploads/1773823386397-Screenshot_Test.PNG",
+    "status": "open",
+    "notes": [
+      {
+        "text": "Keine Verbindung",
+        "name": "Luciana Bezerra",
+        "role": "User",
+        "time": "18.3.2026, 09:43:06"
+      }
+    ],
+    "created": "18.3.2026, 09:43:06"
+  },
+  {
+    "id": 1773823533670,
+    "number": "T-1003",
+    "participant": "Luciana Bezerra",
+    "subject": "Server",
+    "description": "Keine Verbindung möglich",
+    "screenshot": "/uploads/1773823533665-Screenshot_Test.PNG",
+    "status": "open",
+    "notes": [
+      {
+        "text": "Keine Verbindung möglich",
+        "name": "Luciana Bezerra",
+        "role": "User",
+        "time": "18.3.2026, 09:45:33"
+      }
+    ],
+    "created": "18.3.2026, 09:45:33"
   }
 ]

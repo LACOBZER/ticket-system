@@ -8,7 +8,6 @@ Dieses Projekt wurde im Rahmen einer Umschulung entwickelt.
 <html>
 <head>
   <title>IT Support Ticket System</title>
-
   <style>
     body{
       font-family:Arial;
@@ -16,7 +15,6 @@ Dieses Projekt wurde im Rahmen einer Umschulung entwickelt.
       margin:0;
       padding:0;
     }
-
     header{
       background:#007bff;
       color:white;
@@ -24,13 +22,11 @@ Dieses Projekt wurde im Rahmen einer Umschulung entwickelt.
       text-align:center;
       font-size:22px;
     }
-
     .container{
       display:flex;
       justify-content:center;
       margin-top:50px;
     }
-
     .card{
       background:white;
       padding:30px;
@@ -38,11 +34,9 @@ Dieses Projekt wurde im Rahmen einer Umschulung entwickelt.
       border-radius:10px;
       box-shadow:0 2px 10px rgba(0,0,0,0.1);
     }
-
     label{
       font-weight:bold;
     }
-
     input, textarea{
       width:100%;
       padding:10px;
@@ -53,11 +47,9 @@ Dieses Projekt wurde im Rahmen einer Umschulung entwickelt.
       font-size:14px;
       box-sizing:border-box;
     }
-
     textarea{
       resize:none;
     }
-
     button{
       background:#007bff;
       color:white;
@@ -68,11 +60,9 @@ Dieses Projekt wurde im Rahmen einer Umschulung entwickelt.
       font-size:16px;
       cursor:pointer;
     }
-
     button:hover{
       background:#0056b3;
     }
-
     .success{
       background:#d4edda;
       color:#155724;
@@ -81,7 +71,6 @@ Dieses Projekt wurde im Rahmen einer Umschulung entwickelt.
       margin-bottom:10px;
       display:none;
     }
-
     .error{
       background:#f8d7da;
       color:#721c24;
@@ -90,23 +79,19 @@ Dieses Projekt wurde im Rahmen einer Umschulung entwickelt.
       margin-bottom:10px;
       display:none;
     }
-
     .section{
       margin-top:25px;
       text-align:center;
     }
-
     .section a{
       color:#007bff;
       text-decoration:none;
       font-weight:bold;
     }
-
     .diagram{
       text-align:center;
       margin-top:60px;
     }
-
     .diagram img{
       max-width:700px;
       width:100%;
@@ -115,7 +100,6 @@ Dieses Projekt wurde im Rahmen einer Umschulung entwickelt.
     }
   </style>
 </head>
-
 <body>
 
 <header>
@@ -124,13 +108,12 @@ Dieses Projekt wurde im Rahmen einer Umschulung entwickelt.
 
 <div class="container">
   <div class="card">
-
     <h2>Support Ticket erstellen</h2>
 
     <div id="success" class="success"></div>
     <div id="error" class="error"></div>
 
-    <form id="ticketForm">
+    <form id="ticketForm" enctype="multipart/form-data">
       <label>Teams Teilnehmer</label>
       <input type="text" id="participant" required>
 
@@ -143,9 +126,7 @@ Dieses Projekt wurde im Rahmen einer Umschulung entwickelt.
       <label>Screenshot (optional)</label>
       <input type="file" id="screenshot" accept="image/*">
 
-      <button type="submit">
-        Ticket erstellen
-      </button>
+      <button type="submit">Ticket erstellen</button>
     </form>
 
     <hr>
@@ -162,7 +143,6 @@ Dieses Projekt wurde im Rahmen einer Umschulung entwickelt.
       &nbsp;&nbsp;|&nbsp;&nbsp;
       <a href="support-login.html">Support Login</a>
     </div>
-
   </div>
 </div>
 
@@ -183,25 +163,23 @@ document.getElementById("ticketForm").addEventListener("submit", async function(
   successBox.innerHTML = "";
   errorBox.innerHTML = "";
 
-  const participant = document.getElementById("participant").value.trim();
-  const subject = document.getElementById("subject").value.trim();
-  const details = document.getElementById("details").value.trim();
+  const formData = new FormData();
+  formData.append("participant", document.getElementById("participant").value.trim());
+  formData.append("subject", document.getElementById("subject").value.trim());
+  formData.append("description", document.getElementById("details").value.trim());
+
+  const file = document.getElementById("screenshot").files[0];
+  if(file){
+    formData.append("screenshot", file);
+  }
 
   try {
     const res = await fetch("/api/tickets", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        participant: participant,
-        subject: subject,
-        description: details
-      })
+      body: formData
     });
 
     const data = await res.json();
-    console.log("SERVER RESPONSE:", data);
 
     if (!res.ok || !data.number) {
       errorBox.style.display = "block";
