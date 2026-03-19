@@ -163,20 +163,21 @@ document.getElementById("ticketForm").addEventListener("submit", async function(
   successBox.innerHTML = "";
   errorBox.innerHTML = "";
 
-  const formData = new FormData();
-  formData.append("participant", document.getElementById("participant").value.trim());
-  formData.append("subject", document.getElementById("subject").value.trim());
-  formData.append("description", document.getElementById("details").value.trim());
-
-  const file = document.getElementById("screenshot").files[0];
-  if(file){
-    formData.append("screenshot", file);
-  }
+  const participant = document.getElementById("participant").value.trim();
+  const subject = document.getElementById("subject").value.trim();
+  const details = document.getElementById("details").value.trim();
 
   try {
     const res = await fetch("/api/tickets", {
       method: "POST",
-      body: formData
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        participant: participant,
+        subject: subject,
+        description: details
+      })
     });
 
     const data = await res.json();
