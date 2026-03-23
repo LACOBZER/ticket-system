@@ -78,6 +78,19 @@
       margin-top:10px;
       border-radius:6px;
     }
+    .info{
+      margin-top:15px;
+      padding:10px;
+      border-radius:6px;
+      background:#eef3f8;
+    }
+    .error{
+      margin-top:15px;
+      padding:10px;
+      border-radius:6px;
+      background:#f8d7da;
+      color:#721c24;
+    }
   </style>
 </head>
 <body>
@@ -100,6 +113,7 @@
 
     <button onclick="loadTickets()">Tickets anzeigen</button>
 
+    <div id="message"></div>
     <div id="ticketList"></div>
 
     <div class="back">
@@ -109,53 +123,72 @@
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-async function loadTickets(){
-  const name = document.getElementById("name").value.trim();
+  const SUPABASE_URL = "https://epszdsxexzxpgsrexxqy.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_sB6ZPrGeVXk7zSbc3vRdBg_WxmZkNEU";
 
-  const res = await fetch("/api/tickets");
-  const tickets = await res.json();
+  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  let html = "";
+  async function loadTickets() {
+    const name = document.getElementById("name").value.trim();
+    const ticketList = document.getElementById("ticketList");
+    const message = document.getElementById("message");
 
-  tickets.forEach(t => {
-    if (t.participant === name) {
-      let statusText = "";
+    ticketList.innerHTML = "";
+    message.innerHTML = "";
+
+    if (!name) {
+      message.innerHTML = '<div class="error">Bitte geben Sie einen Namen ein.</div>';
+      return;
+    }
+
+    const { data, error } = await supabaseClient
+      .from("tickets")
+      .select("*")
+      .eq("participant", name)
+      .order("created", { ascending: false });
+
+    if (error) {
+      message.innerHTML = '<div class="error">Fehler beim Laden: ' + error.message + '</div>';
+      return;
+    }
+
+    if (!data || data.length === 0) {
+      message.innerHTML = '<div class="info">Keine Tickets gefunden.</div>';
+      return;
+    }
+
+    let html = "";
+
+    data.forEach(t => {
+      let statusText = t.status || "";
       let statusClass = "";
 
       if (t.status === "open") {
         statusText = "Offen";
         statusClass = "status-open";
-      }
-
-      if (t.status === "in_progress") {
+      } else if (t.status === "in_progress") {
         statusText = "In Bearbeitung";
         statusClass = "status-progress";
-      }
-
-      if (t.status === "closed") {
+      } else if (t.status === "closed") {
         statusText = "Erledigt";
         statusClass = "status-closed";
       }
 
       html += `
         <div class="ticket">
-          <b>Ticketnummer:</b> ${t.number}<br>
-          <b>Anliegen:</b> ${t.subject}<br>
-          <b>Details:</b> ${t.description}<br>
-          <b>Status:</b> <span class="${statusClass}">${statusText}</span>
+          <b>Ticketnummer:</b> ${t.number || "-"}<br>
+          <b>Anliegen:</b> ${t.subject || "-"}<br>
+          <b>Details:</b> ${t.description || "-"}<br>
+          <b>Status:</b> <span class="${statusClass}">${statusText || "-"}</span>
           ${t.screenshot ? `<br><br><b>Screenshot:</b><br><img src="${t.screenshot}" alt="Screenshot">` : ""}
         </div>
       `;
-    }
-  });
+    });
 
-  if (html === "") {
-    html = "Keine Tickets gefunden.";
+    ticketList.innerHTML = html;
   }
-
-  document.getElementById("ticketList").innerHTML = html;
-}
 </script>
 
 <footer style="text-align:center;margin-top:40px;color:#777;font-size:12px">
