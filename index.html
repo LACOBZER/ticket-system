@@ -162,10 +162,15 @@ Dieses Projekt wurde im Rahmen einer Umschulung entwickelt.
   <img src="usecase.png" alt="Use Case Diagramm">
 </div>
 
-<script>
-const API_BASE = "https://it-support-ticket-system-a3sj.onrender.com";
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-document.getElementById("ticketForm").addEventListener("submit", async function(e){
+<script>
+const SUPABASE_URL = "https://epszdsxexzxpgsrexxqy.supabase.co";
+const SUPABASE_KEY = "HIER_DEIN_PUBLISHABLE_KEY_EINFÜGEN";
+
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+document.getElementById("ticketForm").addEventListener("submit", async function(e) {
   e.preventDefault();
 
   const successBox = document.getElementById("success");
@@ -180,48 +185,39 @@ document.getElementById("ticketForm").addEventListener("submit", async function(
   const subject = document.getElementById("subject").value.trim();
   const details = document.getElementById("details").value.trim();
 
+  const ticketNumber = "T-" + Date.now();
+
   try {
-    const res = await fetch(API_BASE + "/api/tickets", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        participant: participant,
-        subject: subject,
-        description: details
-      })
-    });
+    const { data, error } = await supabaseClient
+      .from("tickets")
+      .insert([
+        {
+          number: ticketNumber,
+          participant: participant,
+          subject: subject,
+          description: details,
+          status: "open",
+          created: new Date().toISOString()
+        }
+      ])
+      .select();
 
-    let data = {};
-    try {
-      data = await res.json();
-    } catch {
-      data = {};
-    }
-
-    if (!res.ok) {
+    if (error) {
       errorBox.style.display = "block";
-      errorBox.innerHTML = "Fehler beim Erstellen: " + (data.error || ("HTTP " + res.status));
-      return;
-    }
-
-    if (!data.number) {
-      errorBox.style.display = "block";
-      errorBox.innerHTML = "Ticket wurde vielleicht gespeichert, aber keine Ticketnummer wurde zurückgegeben.";
-      console.log("Server-Antwort:", data);
+      errorBox.innerHTML = "Fehler beim Erstellen: " + error.message;
       return;
     }
 
     successBox.style.display = "block";
     successBox.innerHTML =
-      "Ticket erfolgreich erstellt!<br><b>Ticketnummer: " + data.number + "</b>";
+      "Ticket erfolgreich erstellt!<br><b>Ticketnummer: " + ticketNumber + "</b>";
 
     document.getElementById("ticketForm").reset();
+    console.log("Gespeichertes Ticket:", data);
   } catch (err) {
-    console.error("Fetch-Fehler:", err);
     errorBox.style.display = "block";
-    errorBox.innerHTML = "Server nicht erreichbar: " + err.message;
+    errorBox.innerHTML = "Fehler: " + err.message;
+    console.error(err);
   }
 });
 </script>
