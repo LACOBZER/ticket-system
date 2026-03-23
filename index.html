@@ -134,10 +134,13 @@ Dieses Projekt wurde im Rahmen einer Umschulung entwickelt.
       <label>Anliegen</label>
       <input type="text" id="subject" required>
 
-      <label>Details</label>
-      <textarea id="details" rows="4"></textarea>
+     <label>Details</label>
+<textarea id="details" rows="4"></textarea>
 
-      <button type="submit">Ticket erstellen</button>
+<label>Screenshot (optional)</label>
+<input type="file" id="screenshot" accept="image/*">
+
+<button type="submit">Ticket erstellen</button>
     </form>
 
     <hr>
@@ -184,10 +187,34 @@ document.getElementById("ticketForm").addEventListener("submit", async function(
   const participant = document.getElementById("participant").value.trim();
   const subject = document.getElementById("subject").value.trim();
   const details = document.getElementById("details").value.trim();
+  const screenshotFile = document.getElementById("screenshot").files[0];
 
   const ticketNumber = "T-" + Date.now();
+  let screenshotUrl = "";
 
   try {
+    if (screenshotFile) {
+      const fileExt = screenshotFile.name.split(".").pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${fileExt}`;
+      const filePath = `tickets/${fileName}`;
+
+      const { error: uploadError } = await supabaseClient.storage
+        .from("screenshots")
+        .upload(filePath, screenshotFile);
+
+      if (uploadError) {
+        errorBox.style.display = "block";
+        errorBox.innerHTML = "Fehler beim Screenshot-Upload: " + uploadError.message;
+        return;
+      }
+
+      const { data: publicUrlData } = supabaseClient.storage
+        .from("screenshots")
+        .getPublicUrl(filePath);
+
+      screenshotUrl = publicUrlData.publicUrl;
+    }
+
     const { data, error } = await supabaseClient
       .from("tickets")
       .insert([
@@ -196,6 +223,7 @@ document.getElementById("ticketForm").addEventListener("submit", async function(
           participant: participant,
           subject: subject,
           description: details,
+          screenshot: screenshotUrl,
           status: "open",
           created: new Date().toISOString()
         }
