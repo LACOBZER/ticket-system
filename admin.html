@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>IT Support Ticket System</title>
+  <title>Support Dashboard</title>
+
   <style>
     body{
       font-family:Arial;
@@ -9,13 +10,16 @@
       margin:0;
       padding:30px;
     }
+
     .wrapper{
       max-width:900px;
       margin:auto;
     }
+
     h1{
       margin-bottom:20px;
     }
+
     button{
       background:#007bff;
       color:white;
@@ -26,13 +30,16 @@
       font-size:14px;
       margin-right:10px;
     }
+
     .logout{
       background:#dc3545;
     }
+
     .filter{
       margin-top:15px;
       margin-bottom:20px;
     }
+
     .ticket{
       background:white;
       border-radius:10px;
@@ -40,6 +47,7 @@
       margin-bottom:20px;
       box-shadow:0 2px 8px rgba(0,0,0,0.1);
     }
+
     input, textarea, select{
       width:100%;
       padding:8px;
@@ -50,21 +58,15 @@
       font-size:14px;
       box-sizing:border-box;
     }
+
     textarea{
       resize:none;
     }
-    .status-open{
-      color:red;
-      font-weight:bold;
-    }
-    .status-progress{
-      color:orange;
-      font-weight:bold;
-    }
-    .status-closed{
-      color:green;
-      font-weight:bold;
-    }
+
+    .status-open{ color:red; font-weight:bold; }
+    .status-progress{ color:orange; font-weight:bold; }
+    .status-closed{ color:green; font-weight:bold; }
+
     .stats{
       background:white;
       padding:20px;
@@ -72,15 +74,16 @@
       margin-bottom:30px;
       box-shadow:0 2px 8px rgba(0,0,0,0.1);
     }
-    .history{
-      margin-top:15px;
-    }
+
+    .history{ margin-top:15px; }
+
     .note{
       background:#f4f6f9;
       padding:10px;
       border-radius:6px;
       margin-bottom:8px;
     }
+
     img{
       max-width:400px;
       border-radius:6px;
@@ -88,18 +91,20 @@
     }
   </style>
 </head>
+
 <body>
 
 <script>
-if(!localStorage.getItem("admin") && !localStorage.getItem("role")){
+if(!localStorage.getItem("role")){
   window.location.href = "index.html";
 }
 </script>
 
 <div class="wrapper">
+
   <h1>Support Dashboard</h1>
 
-  <button onclick="window.location.href='index.html'">← Zurück zur Startseite</button>
+  <button onclick="window.location.href='index.html'">← Zurück</button>
   <button onclick="loadTickets()">Aktualisieren</button>
   <button class="logout" onclick="logout()">Logout</button>
 
@@ -121,13 +126,31 @@ if(!localStorage.getItem("admin") && !localStorage.getItem("role")){
   </div>
 
   <div id="tickets"></div>
+
 </div>
 
-<script>
-async function loadTickets(){
-  const res = await fetch("/api/tickets");
-  let tickets = await res.json();
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
+<script>
+const SUPABASE_URL = "https://epszdsxexzxpgsrexxqy.supabase.co";
+const SUPABASE_KEY = "https://epszdsxexzxpgsrexxqy.supabase.co";
+
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+async function loadTickets(){
+
+  const { data, error } = await supabaseClient
+    .from("tickets")
+    .select("*")
+    .order("id", { ascending: false });
+
+  if(error){
+    document.getElementById("tickets").innerHTML =
+      "<div style='color:red;'>Fehler: " + error.message + "</div>";
+    return;
+  }
+
+  const tickets = data || [];
   const filter = document.getElementById("statusFilter").value;
 
   let open = 0;
@@ -144,14 +167,11 @@ async function loadTickets(){
   document.getElementById("progress").innerText = progress;
   document.getElementById("closed").innerText = closed;
 
-  tickets.sort((a,b) => b.id - a.id);
-
   let html = "";
 
   tickets.forEach(t => {
-    if(filter !== "all" && t.status !== filter){
-      return;
-    }
+
+    if(filter !== "all" && t.status !== filter) return;
 
     let statusText = "";
     let statusClass = "";
@@ -159,37 +179,35 @@ async function loadTickets(){
     if(t.status === "open"){
       statusText = "Offen";
       statusClass = "status-open";
-    }
-
-    if(t.status === "in_progress"){
+    } else if(t.status === "in_progress"){
       statusText = "In Bearbeitung";
       statusClass = "status-progress";
-    }
-
-    if(t.status === "closed"){
+    } else if(t.status === "closed"){
       statusText = "Erledigt";
       statusClass = "status-closed";
     }
 
     html += `
       <div class="ticket">
-        <h3>${t.number} — ${t.subject}</h3>
 
-        <b>Teams Teilnehmer:</b> ${t.participant}<br>
+        <h3>${t.number || "-"} — ${t.subject || "-"}</h3>
+
+        <b>Teilnehmer:</b> ${t.participant || "-"}<br>
 
         <b>Details:</b><br>
-        ${t.description}
+        ${t.description || "-"}
 
         ${t.screenshot ? `
           <br><br>
           <b>Screenshot:</b><br>
-          <img src="${t.screenshot}" alt="Screenshot">
+          <img src="${t.screenshot}">
         ` : ""}
 
         <br><br>
         <b>Status:</b> <span class="${statusClass}">${statusText}</span>
 
-        <form onsubmit="saveTicket(event,${t.id})">
+        <form onsubmit="saveTicket(event, ${t.id})">
+
           <label>Status ändern</label>
           <select id="status-${t.id}">
             <option value="open" ${t.status==="open"?"selected":""}>Offen</option>
@@ -198,32 +216,34 @@ async function loadTickets(){
           </select>
 
           <label>Name</label>
-          <input id="name-${t.id}" placeholder="z.B. Max Mustermann">
-
-          <label>Rolle</label>
-          <select id="role-${t.id}">
-            <option value="User">User</option>
-            <option value="Support" selected>Support</option>
-          </select>
+          <input id="name-${t.id}">
 
           <label>Notiz</label>
-          <textarea id="note-${t.id}" rows="3"></textarea>
+          <textarea id="note-${t.id}"></textarea>
 
           <button type="submit">Speichern</button>
+
         </form>
 
         <div class="history">
-          <b>Bearbeitungsverlauf:</b><br><br>
-          ${(t.notes || []).map(n => `
+          <b>Verlauf:</b><br><br>
+
+          ${(Array.isArray(t.notes)?t.notes:[]).map(n => `
             <div class="note">
-              ${n.time} – <b>${n.name}</b> (${n.role})<br>
-              ${n.text}
+              ${n.time || ""} – <b>${n.name || ""}</b><br>
+              ${n.text || ""}
             </div>
           `).join("")}
+
         </div>
+
       </div>
     `;
   });
+
+  if(!html){
+    html = "<div class='ticket'>Keine Tickets gefunden.</div>";
+  }
 
   document.getElementById("tickets").innerHTML = html;
 }
@@ -234,18 +254,30 @@ async function saveTicket(event,id){
   const status = document.getElementById("status-"+id).value;
   const note = document.getElementById("note-"+id).value;
   const name = document.getElementById("name-"+id).value;
-  const role = document.getElementById("role-"+id).value;
 
-  await fetch("/api/update/"+id,{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({
-      status:status,
-      note:note,
-      name:name,
-      role:role
+  const { data } = await supabaseClient
+    .from("tickets")
+    .select("notes")
+    .eq("id", id)
+    .single();
+
+  let notes = Array.isArray(data?.notes) ? data.notes : [];
+
+  if(note){
+    notes.push({
+      text: note,
+      name: name || "Support",
+      time: new Date().toLocaleString()
+    });
+  }
+
+  await supabaseClient
+    .from("tickets")
+    .update({
+      status: status,
+      notes: notes
     })
-  });
+    .eq("id", id);
 
   loadTickets();
 }
@@ -259,7 +291,7 @@ loadTickets();
 </script>
 
 <footer style="text-align:center;margin-top:40px;color:#777;font-size:12px">
-  © 2026 Luciana Bezerra – IT Support Ticket System
+© 2026 Luciana Bezerra – IT Support Ticket System
 </footer>
 
 </body>
